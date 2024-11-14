@@ -1,0 +1,61 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Administrator {
+  id Int @id @default(autoincrement())
+  email String @unique
+  password String
+  isAdmin Boolean @default(true)
+  @@map("administrators")
+}
+
+model User {
+  id  Int   @id @default(autoincrement())
+  email String  @unique
+  password String
+  banned Boolean @default(false)
+  banReason String?
+  accounts Account[]
+  @@map("users")
+}
+
+model Account {
+  id Int @id @default(autoincrement())
+  accountNumber Int @unique
+  balance Float @default(0.0)
+  currency String
+  user User @relation(fields: [userId], references: [id])
+  userId Int
+  deposits Deposit[]
+  sentTransactions    Transaction[] @relation("FromAccountRelation")
+  receivedTransactions Transaction[] @relation("ToAccountRelation")
+  @@map("accounts")
+}
+
+model Deposit {
+  id Int @id @default(autoincrement())
+  depositNumber Int @unique
+  balance Float @default(0.0)
+  currency String
+  interestPerYear Float
+  account Account @relation(fields: [accountId], references: [id])
+  accountId Int
+  @@map("deposits")
+}
+
+model Transaction {
+  id Int @id @default(autoincrement())
+  fromAccount Account @relation("FromAccountRelation", fields: [fromAccountNumber], references: [accountNumber])
+  toAccount Account @relation("ToAccountRelation", fields: [toAccountNumber], references : [accountNumber])
+  fromAccountNumber Int
+  toAccountNumber Int
+  amountFromCurrency Float
+  amountToCurrency Float?
+  @@map("transactions")
+}

@@ -6,6 +6,7 @@
       <p><strong>Email:</strong> {{ user.email }}</p>
       <p><strong>Banned:</strong> {{ user.banned ? "Yes" : "No" }}</p>
       <p v-if="user.banReason"><strong>Ban Reason:</strong> {{ user.banReason }}</p>
+      <button @click="transaction">Create transaction</button>
 
       <div>
         <h3>Accounts</h3>
@@ -13,7 +14,9 @@
           <li v-for="(account, index) in user.accounts" :key="index">
             <p><strong>Account Number:</strong> {{ account.accountNumber }}</p>
             <p><strong>Balance:</strong> {{ account.balance }} {{ account.currency }}</p>
-            <button @click="createDeposit" v-if="!user.isAdmin">Create New Account</button>
+            <button @click="recharge(account.id)" >Recharge account</button>
+            <button @click="createDeposit">Create New Deposit</button>
+            <button @click="deleteAccount(account.id)">Delete Account</button>
 
             <div>
               <h4>Deposits</h4>
@@ -36,38 +39,65 @@
 </template>
 
 <script>
-import axios from 'axios';
-import VueJwtDecode from 'vue-jwt-decode'
+import axios from 'axios'
 
 export default {
   data() {
     return {
-      user: null
-    }
+      token: "",
+      user: null,
+    };
   },
   async created() {
-      const token = sessionStorage.getItem('token');
-      try {
-        const decodedToken = VueJwtDecode.decode(token);
-        if (decodedToken && decodedToken.email) {
-          const response = await axios.post('/api/users/getAll', { email: decodedToken.email });
-          this.user = {
-            ...response.data,
-            accounts: response.data.accounts || []
-          };
-        } else {
-          console.error("User session not found.");
-        }
-      } catch (error) {
-        console.log(error);
+    this.token = sessionStorage.getItem('token');
+    try {
+      if (this.token) {
+        const response = await axios.post(
+          '/api/users/getAll',
+          {},
+          {
+            headers: {
+              Authorization: `Bearer ${this.token}`,
+            },
+          }
+        );
+
+        this.user = {
+          ...response.data,
+          accounts: response.data.accounts || [],
+        };
+      } else {
+        console.error("User session not found.");
       }
+    } catch (error) {
+      console.error("Failed to fetch user data:", error);
+    }
   },
   methods: {
     createDeposit() {
 
     },
     createAccount() {
-
+      this.$router.push('/createAccount');
+    },
+    async deleteAccount(id) {
+      try {
+        await axios.delete(`/api/accounts/deleteAccount/${id}`, {
+          headers: {
+            Authorization: `Bearer ${this.token}`,
+          },
+        });
+        this.user.accounts = this.user.accounts.filter(account => account.id !== id);
+        console.log(`Account with id ${id} has been deleted`);
+      } catch (error) {
+        console.error("Failed to delete account:", error);
+      }
+    },
+    transaction() {
+      this.$router.push('/createTransaction');
+    },
+    recharge(id) {
+      this.$router.push('/recharge', { id: id });
     }
   }
 };
