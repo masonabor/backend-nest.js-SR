@@ -11,35 +11,24 @@ export class AuthService {
     private adminService: AdministratorsService,
   ) {}
 
-  // async validateUser(email: string, password: string): Promise<any> {
-  //   const user = await this.usersService.validateUser(email, password);
-  //   if (user) {
-  //     const { password, ...result } = user;
-  //     return result;
-  //   }
-  //   return null;
-  // }
-
   async login(email: string, password: string): Promise<{ access_token: string }> {
-    const user = await this.usersService.validateUser(email, password);
+
     const admin = await this.adminService.validateAdmin(email, password);
-
-    if (user) {
-      const payload = { userId: user.id, email: user.email, isAdmin: false };
-      return { access_token: this.jwtService.sign(payload)
-
-      }
-    }
+    const user = await this.usersService.validateUser(email, password);
 
     if (admin) {
-      const payload = { adminId: admin.id, email: admin.email, isAdmin: admin.isAdmin};
+      const payload = { adminId: admin.id, email: admin.email, isAdmin: true };
       return { access_token: this.jwtService.sign(payload) };
     }
 
-    if (!user && !admin) {
-      throw new UnauthorizedException('Invalid email or password');
+    if (user) {
+      const payload = { userId: user.id, email: user.email, isAdmin: false };
+      return { access_token: this.jwtService.sign(payload) };
     }
+
+    throw new UnauthorizedException('Invalid email or password');
   }
+
 
   verifyToken(token: string) {
     try {
@@ -59,15 +48,14 @@ export class AuthService {
 
   async decodeHeader(header: string) {
     if (!header || !header.startsWith('Bearer ')) {
-      throw new UnauthorizedException('Authorization header must be provided in the format: Bearer <token>');
+      throw new UnauthorizedException(
+        'Authorization header must be provided in the format: Bearer <token>',
+      );
     }
 
     const token = header.replace('Bearer ', '');
-    try {
-      return this.verifyToken(token);
-    } catch (error) {
-      throw new UnauthorizedException('Invalid or expired token');
-    }
+    return this.verifyToken(token);
   }
+
 
 }

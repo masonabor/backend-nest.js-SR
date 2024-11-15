@@ -2,9 +2,7 @@ import {
   Body,
   Controller,
   Delete,
-  Get,
   Param,
-  ParseIntPipe,
   Post,
   Headers,
   UnauthorizedException, BadRequestException,
@@ -27,16 +25,19 @@ export class AccountsController {
     }
     console.log(authorization)
     const token = authorization.replace('Bearer ', '');
+    let user = null;
 
     try {
       const decodedToken = await this.authService.verifyToken(token);
-      const user = await this.usersService.getUserByEmail(decodedToken.email);
-      console.log(user);
-      console.log(decodedToken);
-      return await this.accountsService.createAccount(data, user);
+      user = await this.usersService.getUserByEmail(decodedToken.email);
     } catch (error) {
       throw new UnauthorizedException('Invalid or expired token');
     }
+
+    if (user.banned) {
+      throw new UnauthorizedException('You are banned');
+    }
+    return await this.accountsService.createAccount(data, user);
   }
 
   @Delete('deleteAccount/:id')
@@ -75,6 +76,10 @@ export class AccountsController {
       user = await this.usersService.getUserByEmail(decodedToken.email);
     } catch (error) {
       throw new UnauthorizedException('Invalid or expired token');
+    }
+
+    if (user.banned) {
+      throw new UnauthorizedException('You are banned');
     }
 
     if (amount <= 0) {

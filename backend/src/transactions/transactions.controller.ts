@@ -20,6 +20,10 @@ export class TransactionsController {
     const decodedToken = await this.authService.decodeHeader(authorization);
     const user = await this.usersService.getUserByEmail(decodedToken.email);
 
+    if (user.banned) {
+      throw new UnauthorizedException('You are banned');
+    }
+
     const transaction = await this.transactionsService.createTransaction(data, fromAccountNUmber, toAccountNumber, user);
 
     if (!transaction) {

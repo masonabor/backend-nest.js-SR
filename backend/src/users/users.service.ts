@@ -99,4 +99,15 @@ export class UsersService {
     }
     return userWithAccounts.accounts;
   }
+
+  async banUser(email: string, banReason: string): Promise<void> {
+    await this.prisma.user.update({
+      where: { email },
+      data: {
+        banned: true,
+        banReason,
+      },
+    });
+  }
+
 }

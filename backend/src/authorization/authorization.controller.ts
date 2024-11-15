@@ -11,12 +11,7 @@ export class AuthController {
   }
 
   @Get('profile')
-  async getProfile(@Headers('Authorization') authHeader: string) {
-    if (!authHeader) {
-      throw new UnauthorizedException('Токен не надано');
-    }
-
-    const token = authHeader.replace('Bearer ', '');
-    return this.authService.verifyToken(token);
+  async get(@Headers('Authorization') authorization: string) {
+    return this.authService.decodeHeader(authorization);
   }
 }

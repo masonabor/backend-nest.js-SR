@@ -1,11 +1,12 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import LoginComponent from '@/components/LoginComponent.vue';
-import UserPageComponent from '@/components/UserInfo.vue';
+import UserPageComponent from '@/components/UserPageComponent.vue';
 import AdminPageComponent from '@/components/AdminPageComponent.vue';
 import CreateAdminComponent from '@/components/CreateAdminComponent.vue';
 import CreateAccountComponent from '@/components/CreateAccountComponent.vue';
 import CreateTransactionComponent from '@/components/CreateTransactionComponent.vue';
 import RechargeComponent from '@/components/RechargeComponent.vue';
+import CheckUserComponent from '@/components/CheckUserComponent.vue';
 
 export default createRouter({
   history: createWebHistory(),
@@ -44,5 +45,10 @@ export default createRouter({
       path: "/recharge",
       name: "Recharge",
       component: RechargeComponent
+    },
+    {
+      path: "/userInfoForAdmin",
+      name: "UserInfoForAdmin",
+      component: CheckUserComponent
     }]
 })

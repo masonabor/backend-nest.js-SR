@@ -11,7 +11,7 @@ export class AdministratorsService {
 
   async createAdmin(data: Prisma.AdministratorCreateInput): Promise<Administrator> {
 
-    if (! (await this.getAdminByEmail(data.email))) {
+    if (await this.getAdminByEmail(data.email)) {
       throw new NotFoundException('Email already exists');
     }
 
@@ -35,6 +35,7 @@ export class AdministratorsService {
   }
 
   async validateAdmin(email: string, password: string): Promise<Administrator | null> {
+
     const admin = await this.prisma.administrator.findUnique({
       where: { email }
     });
@@ -54,7 +55,7 @@ export class AdministratorsService {
     return admin ? admin : null;
   }
 
-  async getAdminByEmail(email: string): Promise<Administrator | null> {
+  async getAdminByEmail(email: string): Promise<Administrator> {
     const admin = await this.prisma.administrator.findUnique({
       where: {email}
     });

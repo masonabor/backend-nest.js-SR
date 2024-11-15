@@ -13,8 +13,15 @@
         <ul v-if="user.accounts && user.accounts.length">
           <li v-for="(account, index) in user.accounts" :key="index">
             <p><strong>Account Number:</strong> {{ account.accountNumber }}</p>
-            <p><strong>Balance:</strong> {{ account.balance }} {{ account.currency }}</p>
-            <button @click="recharge(account.id)" >Recharge account</button>
+            <p><strong>Balance:</strong> {{ account.convertedBalance || account.balance}} {{ account.selectedCurrency }}
+              <label for="currency"></label>
+              <select v-model="account.selectedCurrency" @change="convertCurrency(account)">
+                <option v-for="cur in currencies" :key="cur" :value="cur">
+                  {{ cur }}
+                </option>
+              </select>
+            </p>
+            <button @click="recharge(account.id)">Recharge account</button>
             <button @click="createDeposit">Create New Deposit</button>
             <button @click="deleteAccount(account.id)">Delete Account</button>
 
@@ -39,13 +46,14 @@
 </template>
 
 <script>
-import axios from 'axios'
+import axios from 'axios';
 
 export default {
   data() {
     return {
-      token: "",
+      token: '',
       user: null,
+      currencies: ['USD', 'EUR', 'UAH'],
     };
   },
   async created() {
@@ -64,7 +72,11 @@ export default {
 
         this.user = {
           ...response.data,
-          accounts: response.data.accounts || [],
+          accounts: response.data.accounts.map(account => ({
+            ...account,
+            selectedCurrency: account.currency,
+            convertedBalance: account.balance,
+          })),
         };
       } else {
         console.error("User session not found.");
@@ -98,6 +110,23 @@ export default {
     },
     recharge(id) {
       this.$router.push('/recharge', { id: id });
+    },
+    async convertCurrency(account) {
+      if (account.currency === account.selectedCurrency) {
+        account.convertedBalance = account.balance;
+        return;
+      }
+
+      const fromCurrency = account.currency;
+      const toCurrency = account.selectedCurrency;
+
+      try {
+        const response = await axios.get(`/api/exchange/convert/${fromCurrency}/${toCurrency}/${account.balance}`);
+
+        account.convertedBalance = response.data.amount || response.data;
+      } catch (error) {
+        console.error("Currency conversion failed:", error);
+      }
     }
   }
 };

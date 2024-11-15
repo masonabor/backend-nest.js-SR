@@ -54,11 +54,32 @@ export default {
       confirmPassword: '',
       errorMessage: '',
       successMessage: '',
+      isAdmin: false,
+      token: ''
     };
+  },
+  async created() {
+    this.token = sessionStorage.getItem('token');
+    if (!this.token) {
+      console.error("Токен не знайдено. Будь ласка, увійдіть.");
+      return;
+    }
+
+    try {
+      const decoded = await axios.post('/api/users/getAdmin', {}, {
+        headers: {
+          Authorization: `Bearer ${this.token}`
+        }
+      });
+
+      this.isAdmin = decoded.data.isAdmin;
+    } catch (error) {
+      console.error("Не вдалося перевірити права адміністратора:", error);
+    }
   },
   methods: {
     async registerAdmin() {
-      if (!this.isAdmin()) {
+      if (!this.isAdmin) {
         alert('Ви не є адміністратором')
         return
       }
@@ -77,7 +98,7 @@ export default {
       }
 
       try {
-        await axios.post('/api/users/signupForAdmins', adminData)
+        await axios.post('/api/users/createAdmin', adminData)
         alert('Адміністратор успішно зареєстрований')
         this.clearForm()
       } catch (error) {
