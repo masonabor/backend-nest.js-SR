@@ -48,9 +48,10 @@ export class UsersService {
     return isPasswordValid ? user : null;
   }
 
-  async getUserById(id: number): Promise<User | null> {
+  async getUserById(id: string): Promise<User> {
+    const idToNumber = parseInt(id, 10)
     const user = await this.prisma.user.findUnique({
-      where: {id}
+      where: { id: idToNumber },
     });
 
     return user ? user : null;
@@ -68,9 +69,9 @@ export class UsersService {
     return this.prisma.user.findMany();
   }
 
-  async getUserWithAccountsAndDeposits(email: string): Promise<User> {
+  async getUserWithAccountsAndDeposits(id: string): Promise<User> {
     const userWithAccountsAndDeposits = await this.prisma.user.findUnique({
-      where: { email },
+      where: { id: parseInt(id, 10) },
       include: {
         accounts: {
           include: {
@@ -81,7 +82,7 @@ export class UsersService {
     });
 
     if (!userWithAccountsAndDeposits) {
-      throw new Error(`User with email ${email} not found`);
+      throw new Error(`User with email ${id} not found`);
     }
     return userWithAccountsAndDeposits;
   }
@@ -100,11 +101,15 @@ export class UsersService {
     return userWithAccounts.accounts;
   }
 
-  async banUser(email: string, banReason: string): Promise<void> {
+  async banUser(id: number, banReason: string): Promise<void> {
+    let banned = true;
+    if (!banReason) {
+      banned = false;
+    }
     await this.prisma.user.update({
-      where: { email },
+      where: { id },
       data: {
-        banned: true,
+        banned,
         banReason,
       },
     });

@@ -11,6 +11,7 @@
         {{ user.banned ? "Unban User" : "Ban User" }}
       </button>
       <input v-if="!user.banned" type="text" v-model="banReason" placeholder="Ban Reason" />
+      <button @click="checkUserDepositsHistory">Check deposits history</button>
 
       <h3>Accounts</h3>
       <ul v-if="user.accounts && user.accounts.length">
@@ -25,7 +26,7 @@
                 <p><strong>Deposit Number:</strong> {{ deposit.depositNumber }}</p>
                 <p><strong>Balance:</strong> {{ deposit.balance }} {{ deposit.currency }}</p>
                 <p><strong>Interest per Year:</strong> {{ deposit.interestPerYear }}%</p>
-                <input type="number" v-model="deposit.newInterestRate" placeholder="New Interest Rate" />
+                <input type="number" v-model="deposit.interestPerYear" placeholder="New Interest Rate" />
                 <button @click="updateInterestRate(deposit)">Update Interest Rate</button>
               </li>
             </ul>
@@ -70,10 +71,10 @@ export default {
           console.warn("У вас немає прав адміністратора.");
         }
 
-        const userID = this.$route.params.userID;
-        if (userID) {
+        const userId = this.$route.params.userId;
+        if (userId) {
           try {
-            const response = await axios.get(`/api/users/${userID}`, {
+            const response = await axios.get(`/api/users/getUserInfo/${userId}`, {
               headers: { Authorization: `Bearer ${this.token}` },
             });
             this.user = response.data;
@@ -92,9 +93,12 @@ export default {
   methods: {
     async toggleBanUser() {
       try {
-        const data = { user: this.user, reason: this.banReason };
+        const data = { user: {
+          id: this.user.id,
+            banReason: this.banReason,
+          } };
 
-        await axios.post(`/api/admin/users/banUser`, data, {
+        await axios.post(`/api/users/banUser`, data, {
           headers: { Authorization: `Bearer ${this.token}` },
         });
 
@@ -105,6 +109,24 @@ export default {
       } catch (error) {
         console.error("Failed to toggle ban status:", error);
       }
+    },
+    async updateInterestRate(deposit) {
+      try {
+        await axios.put(`/api/deposits/updateInterestRate`, {
+          id: deposit.id,
+          interestPerYear: deposit.interestPerYear
+        },
+          {
+            headers: {
+              Authorization: `Bearer ${this.token}`,
+            }
+          })
+      } catch (error) {
+        console.log(error)
+      }
+    },
+    async checkUserDepositsHistory() {
+      this.$router.push({ name: 'DepositsHistory' , params: { userId: this.user.id }});
     }
   }
 };

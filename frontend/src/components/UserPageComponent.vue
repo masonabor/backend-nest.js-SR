@@ -6,7 +6,10 @@
       <p><strong>Email:</strong> {{ user.email }}</p>
       <p><strong>Banned:</strong> {{ user.banned ? "Yes" : "No" }}</p>
       <p v-if="user.banReason"><strong>Ban Reason:</strong> {{ user.banReason }}</p>
-      <button @click="transaction">Create transaction</button>
+      <button @click="recharge()" v-if="!user.banned">Recharge account</button>
+      <button @click="withdraw()" v-if="!user.banned">Withdraw</button>
+      <button @click="transaction" v-if="!user.banned">Create transaction</button>
+      <button @click="getHistory(user.id)" v-if="!user.banned">Deposits history</button>
 
       <div>
         <h3>Accounts</h3>
@@ -21,8 +24,7 @@
                 </option>
               </select>
             </p>
-            <button @click="recharge(account.id)">Recharge account</button>
-            <button @click="createDeposit">Create New Deposit</button>
+            <button @click="createDeposit(account.id)" v-if="!user.banned">Create New Deposit</button>
             <button @click="deleteAccount(account.id)">Delete Account</button>
 
             <div>
@@ -32,6 +34,10 @@
                   <p><strong>Deposit Number:</strong> {{ deposit.depositNumber }}</p>
                   <p><strong>Balance:</strong> {{ deposit.balance }} {{ deposit.currency }}</p>
                   <p><strong>Interest per Year:</strong> {{ deposit.interestPerYear }}%</p>
+                  <p><strong>Your balance after ending: {{ deposit.profit }}</strong>
+                  <button @click="checkDeposit(deposit)" v-if="!deposit.profit">Check unrealized profit</button>
+                  </p>
+                  <button @click="deleteDeposit(deposit.id, account.id)">Delete deposit</button>
                 </li>
               </ul>
               <p v-else>No deposits available for this account.</p>
@@ -78,6 +84,7 @@ export default {
             convertedBalance: account.balance,
           })),
         };
+
       } else {
         console.error("User session not found.");
       }
@@ -86,8 +93,25 @@ export default {
     }
   },
   methods: {
-    createDeposit() {
-
+    async createDeposit(accountId) {
+      this.$router.push({ name: 'CreateDeposit', params: { accountId } });
+    },
+    async deleteDeposit(id, accountId) {
+      try {
+        await axios.delete(`/api/deposits/deleteDeposit/${id}/${accountId}`, {
+          headers: {
+            Authorization: `Bearer ${this.token}`,
+          }
+        });
+        const account = this.user.accounts.find(account => account.id === accountId);
+        if (account) {
+          const deposit = account.deposits.find(deposit => deposit.id === id)
+          account.balance += deposit.balance;
+          account.deposits = account.deposits.filter(deposit => deposit.id !== id);
+        }
+      } catch (error) {
+        console.error("Failed to delete deposit:", error);
+      }
     },
     createAccount() {
       this.$router.push('/createAccount');
@@ -100,16 +124,15 @@ export default {
           },
         });
         this.user.accounts = this.user.accounts.filter(account => account.id !== id);
-        console.log(`Account with id ${id} has been deleted`);
       } catch (error) {
         console.error("Failed to delete account:", error);
       }
     },
-    transaction() {
+    async transaction() {
       this.$router.push('/createTransaction');
     },
-    recharge(id) {
-      this.$router.push('/recharge', { id: id });
+    async recharge() {
+      this.$router.push('/recharge');
     },
     async convertCurrency(account) {
       if (account.currency === account.selectedCurrency) {
@@ -127,6 +150,20 @@ export default {
       } catch (error) {
         console.error("Currency conversion failed:", error);
       }
+    },
+    async checkDeposit(deposit) {
+      try {
+        const response = await axios.get(`/api/deposits/checkProfit/${deposit.id}`)
+        deposit.profit = response.data;
+      } catch (error) {
+        console.error(error);
+      }
+    },
+    async withdraw() {
+      this.$router.push('/withdraw');
+    },
+    async getHistory(userId) {
+      this.$router.push({ name: 'DepositsHistory', params: { userId: userId } });
     }
   }
 };

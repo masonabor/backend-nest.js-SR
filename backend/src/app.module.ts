@@ -8,6 +8,7 @@ import { TransactionsModule } from './transactions/transactions.module';
 import { HttpModule } from '@nestjs/axios';
 import { AuthModule } from './authorization/authorization.module';
 import { CurrencyModule } from './currency/currency.module';
+import { DepositsModule } from './deposits/deposits.module';
 
 @Module({
     controllers: [],
@@ -17,6 +18,6 @@ import { CurrencyModule } from './currency/currency.module';
         envFilePath: `.${process.env.NODE_ENV}.env`,
         isGlobal: true
       }),
-      PrismaModule, UsersModule, AccountsModule, AdministratorsModule, HttpModule, TransactionsModule, AuthModule, CurrencyModule],
+      PrismaModule, UsersModule, AccountsModule, AdministratorsModule, HttpModule, TransactionsModule, AuthModule, CurrencyModule, DepositsModule],
 })
 export class AppModule {}

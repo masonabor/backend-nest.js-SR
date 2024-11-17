@@ -5,7 +5,7 @@ import {
   Param,
   Post,
   Headers,
-  UnauthorizedException, BadRequestException,
+  UnauthorizedException, BadRequestException, Put,
 } from '@nestjs/common';
 import { AccountsService } from './accounts.service';
 import { Account, Prisma } from '@prisma/client';
@@ -89,10 +89,25 @@ export class AccountsController {
     return await this.accountsService.deposit(accountId, user, amount);
   }
 
+  @Put('withdraw')
+  async withdraw(@Body() data: { accountId: number, amount: number }, @Headers('Authorization') authorization: string): Promise<void> {
+    const user = await this.authService.decodeHeader(authorization);
 
-  // @Get('userAccounts/:id')
-  // async getUserAccounts(@Param()): Promise<Account[]> {
-  //   return await this.userService.getUserWithAccounts(Number(id));
-  // }
+     if (user.banned) {
+       throw new UnauthorizedException('You are banned');
+     }
+
+     const account = await this.accountsService.getAccountById(data.accountId);
+
+     if (account.userId !== user.userId) {
+       throw new UnauthorizedException('It is not your account');
+     }
+
+     if (account.balance < data.amount) {
+       throw new BadRequestException('You have not enough balance');
+     }
+
+     await this.accountsService.updateBalance(account.id, account.balance - data.amount);
+  }
 
 }

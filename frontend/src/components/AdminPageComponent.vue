@@ -75,7 +75,7 @@ export default {
         });
     },
     viewUserInfo(user) {
-      this.$router.push('/userInfoForAdmin', user);
+      this.$router.push({ name: 'UserInfoForAdmin', params: { userId: user.id } });
     },
     registerAdmin() {
       if (this.isAdmin) {

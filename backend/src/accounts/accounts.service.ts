@@ -3,18 +3,21 @@ import { PrismaService } from '../prisma/prisma.service';
 import { Account, Prisma, User } from '@prisma/client';
 import { currencies} from '../shared/config';
 import { UsersService } from '../users/users.service';
+import { AccountDto } from '../dtos/AccountDTO';
 
 
 @Injectable()
 export class AccountsService {
 
-  constructor(private prisma: PrismaService, private usersService: UsersService) {}
+  constructor(private prisma: PrismaService,
+              private usersService: UsersService) {}
 
   async createAccount(data: Prisma.AccountCreateInput, user: User): Promise<Account> {
     if (!Object.values(currencies).includes(data.currency)) {
       throw new NotFoundException('Currency not found');
     }
 
+    // const number = await this.uniqueNumberService.createUniqueNumber('account')
     return this.prisma.account.create({
       data: {
         accountNumber: Math.floor(10000000 + Math.random() * 90000000),
@@ -30,7 +33,8 @@ export class AccountsService {
     const account = this.prisma.account.findUnique({
       where: {
         id: id
-      }
+      },
+      include: { user: true }
     });
 
     return account ? account : null;
@@ -38,7 +42,7 @@ export class AccountsService {
 
   async getAccountByAccountNumber(accountNumber: number): Promise<Account> {
     const account = this.prisma.account.findUnique({
-      where: { accountNumber: accountNumber }
+      where: { accountNumber }
     });
 
     return account ? account : null;
@@ -60,7 +64,7 @@ export class AccountsService {
 
     await this.prisma.account.delete({
       where: {
-        id: id,
+        id: id
       },
     });
   }
@@ -86,5 +90,12 @@ export class AccountsService {
         },
       },
     });
+  }
+
+  async updateBalance(id: number, balance: number): Promise<Account> {
+    return this.prisma.account.update({
+      where: { id },
+      data: { balance },
+    })
   }
 }

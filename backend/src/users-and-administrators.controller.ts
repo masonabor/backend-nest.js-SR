@@ -27,7 +27,7 @@ export class UsersAndAdministratorsController {
 
   @Post('createUser')
   async createUser(@Body() data: UserDto) {
-    return await this.usersService.createUser(data);
+    return await this.usersService.createUser(data.user);
   }
 
   @Post('createAdmin')
@@ -57,20 +57,21 @@ export class UsersAndAdministratorsController {
     const token = authorization.replace('Bearer ', '');
     try {
       const decodedToken = await this.authService.verifyToken(token);
-      return await this.usersService.getUserWithAccountsAndDeposits(decodedToken.email);
+      return await this.usersService.getUserWithAccountsAndDeposits(decodedToken.userId);
     } catch (error) {
       throw new UnauthorizedException('Invalid or expired token');
     }
   }
-  @Get('getUserinfo/:id')
-  async getUserInfo(@Headers('Authorization') authorization: string, @Param('id') id: number): Promise<User> {
+  @Get('getUserInfo/:id')
+  async getUserInfo(@Headers('Authorization') authorization: string, @Param('id') id: string): Promise<User> {
+    console.log(authorization, id);
     const admin = await this.authService.decodeHeader(authorization);
 
     if (!admin.isAdmin) {
       throw new UnauthorizedException('You are not authorized to access this page');
     }
 
-    const user = await this.usersService.getUserById(id);
+    const user = await this.usersService.getUserWithAccountsAndDeposits(id);
     if (user) {
       return user;
     }
@@ -96,6 +97,6 @@ export class UsersAndAdministratorsController {
       throw new UnauthorizedException('You are not an admin');
     }
 
-    await this.usersService.banUser(data.email, data.banReason);
+    await this.usersService.banUser(data.user.id, data.user.banReason);
   }
 }

@@ -7,6 +7,9 @@ import CreateAccountComponent from '@/components/CreateAccountComponent.vue';
 import CreateTransactionComponent from '@/components/CreateTransactionComponent.vue';
 import RechargeComponent from '@/components/RechargeComponent.vue';
 import CheckUserComponent from '@/components/CheckUserComponent.vue';
+import CreateDepositComponent from '@/components/CreateDepositComponent.vue';
+import WithdrawPageComponent from '@/components/WithdrawPageComponent.vue';
+import DepositsHistoryComponent from '@/components/DepositsHistoryComponent.vue';
 
 export default createRouter({
   history: createWebHistory(),
@@ -47,8 +50,23 @@ export default createRouter({
       component: RechargeComponent
     },
     {
-      path: "/userInfoForAdmin",
+      path: "/user:userId",
       name: "UserInfoForAdmin",
       component: CheckUserComponent
+    },
+    {
+      path: "/createDeposit:accountId",
+      name: "CreateDeposit",
+      component: CreateDepositComponent
+    },
+    {
+      path: "/withdraw",
+      name: "Withdraw",
+      component: WithdrawPageComponent
+    },
+    {
+      path: '/depositsHistory/:userId',
+      name: "DepositsHistory",
+      component: DepositsHistoryComponent
     }]
 })

@@ -12,6 +12,7 @@ model Administrator {
   email String @unique
   password String
   isAdmin Boolean @default(true)
+  dateOfCreation DateTime @default(now())
   @@map("administrators")
 }
 
@@ -22,6 +23,7 @@ model User {
   banned Boolean @default(false)
   banReason String?
   accounts Account[]
+  dateOfCreation DateTime @default(now())
   @@map("users")
 }
 
@@ -35,6 +37,7 @@ model Account {
   deposits Deposit[]
   sentTransactions    Transaction[] @relation("FromAccountRelation")
   receivedTransactions Transaction[] @relation("ToAccountRelation")
+  dateOfCreation DateTime @default(now())
   @@map("accounts")
 }
 
@@ -44,10 +47,27 @@ model Deposit {
   balance Float @default(0.0)
   currency String
   interestPerYear Float
+  expiryDate DateTime
+  interval Int
   account Account @relation(fields: [accountId], references: [id])
   accountId Int
+  dateOfCreation DateTime @default(now())
   @@map("deposits")
 }
+
+model DepositHistory {
+  id Int @id @default(autoincrement())
+  depositNumber Int @unique
+  balance Float @default(0.0)
+  currency String
+  interestPerYear Float
+  expiryDate DateTime
+  interval Int
+  userId Int
+  dateOfCreation DateTime @default(now())
+  @@map("history")
+}
+
 
 model Transaction {
   id Int @id @default(autoincrement())
@@ -57,5 +77,6 @@ model Transaction {
   toAccountNumber Int
   amountFromCurrency Float
   amountToCurrency Float?
+  dateOfCreation DateTime @default(now())
   @@map("transactions")
 }

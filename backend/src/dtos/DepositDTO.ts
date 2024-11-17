@@ -4,5 +4,6 @@ export class DepositDto {
   balance: number;
   currency: string;
   interestPerYear: number;
-  accountId: number; // Foreign key for Account relation
+  accountId: string;
+  interval: string
 }
