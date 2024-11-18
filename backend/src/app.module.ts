@@ -9,15 +9,22 @@ import { HttpModule } from '@nestjs/axios';
 import { AuthModule } from './authorization/authorization.module';
 import { CurrencyModule } from './currency/currency.module';
 import { DepositsModule } from './deposits/deposits.module';
+import { UserGuard } from './authorization/user.guard';
+import { APP_GUARD } from '@nestjs/core';
 
 @Module({
     controllers: [],
-    providers: [],
+    providers: [
+      {
+        provide: APP_GUARD,
+        useClass: UserGuard,
+      }
+    ],
     imports: [
       ConfigModule.forRoot({
         envFilePath: `.${process.env.NODE_ENV}.env`,
         isGlobal: true
       }),
-      PrismaModule, UsersModule, AccountsModule, AdministratorsModule, HttpModule, TransactionsModule, AuthModule, CurrencyModule, DepositsModule],
+      PrismaModule, UsersModule, AccountsModule, AdministratorsModule, HttpModule, TransactionsModule, AuthModule, CurrencyModule, DepositsModule]
 })
 export class AppModule {}

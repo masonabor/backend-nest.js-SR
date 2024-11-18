@@ -93,10 +93,10 @@ export default {
   methods: {
     async toggleBanUser() {
       try {
-        const data = { user: {
+        const data = {
           id: this.user.id,
-            banReason: this.banReason,
-          } };
+          banReason: this.banReason,
+        };
 
         await axios.post(`/api/users/banUser`, data, {
           headers: { Authorization: `Bearer ${this.token}` },

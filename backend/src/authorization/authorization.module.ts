@@ -6,6 +6,8 @@ import { UsersService } from '../users/users.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { AdministratorsService } from '../administrators/administrators.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { AdminGuard } from './admin.guard';
+import { UserGuard } from './user.guard';
 
 @Module({
   imports: [
@@ -19,7 +21,8 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
       }),
     }),
   ],
-  providers: [AuthService, UsersService, PrismaService, AdministratorsService],
+  providers: [AuthService, UsersService, PrismaService, AdministratorsService, AdminGuard, UserGuard],
   controllers: [AuthController],
+  exports: [AuthService]
 })
 export class AuthModule {}

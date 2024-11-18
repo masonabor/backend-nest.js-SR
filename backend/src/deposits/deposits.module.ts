@@ -11,5 +11,6 @@ import { AccountsService } from '../accounts/accounts.service';
 @Module({
   controllers: [DepositsController],
   providers: [PrismaService, DepositService, AuthService, UsersService, JwtService, AdministratorsService, AccountsService],
+  exports: [DepositService]
 })
 export class DepositsModule {}

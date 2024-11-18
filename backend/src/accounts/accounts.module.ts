@@ -10,5 +10,6 @@ import { AdministratorsService } from '../administrators/administrators.service'
 @Module({
   controllers: [AccountsController],
   providers: [AccountsService, PrismaService, UsersService, AuthService, JwtService, AdministratorsService],
+  exports: [AccountsService]
 })
 export class AccountsModule {}

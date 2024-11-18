@@ -1,23 +1,20 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { Prisma, Transaction, User } from '@prisma/client';
+import { Transaction, User } from '@prisma/client';
 import { CurrencyService } from '../currency/currency.service';
 import { AccountsService } from '../accounts/accounts.service';
+import { TransactionDto } from '../dtos/transaction.dto';
 
 @Injectable()
 export class TransactionsService {
   constructor(
     private prisma: PrismaService,
     private currencyService: CurrencyService,
-    private accountsService: AccountsService
+    private accountsService: AccountsService,
   ) {}
 
-  async createTransaction(data: Prisma.TransactionCreateInput,
-                          fromAccountNumber: number,
-                          toAccountNumber: number ,
-                          user: User): Promise<Transaction> {
-
-    const amountFromCurrency = data.amountFromCurrency;
+  async createTransaction(data: TransactionDto, user: User): Promise<Transaction> {
+    const { fromAccountNumber, toAccountNumber, amountFromCurrency } = data;
 
     const fromAccount = await this.accountsService.getAccountByAccountNumber(fromAccountNumber);
     const toAccount = await this.accountsService.getAccountByAccountNumber(toAccountNumber);
@@ -62,7 +59,7 @@ export class TransactionsService {
           fromAccountNumber,
           toAccountNumber,
           amountFromCurrency,
-          amountToCurrency
+          amountToCurrency,
         },
       });
     });

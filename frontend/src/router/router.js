@@ -10,12 +10,13 @@ import CheckUserComponent from '@/components/CheckUserComponent.vue';
 import CreateDepositComponent from '@/components/CreateDepositComponent.vue';
 import WithdrawPageComponent from '@/components/WithdrawPageComponent.vue';
 import DepositsHistoryComponent from '@/components/DepositsHistoryComponent.vue';
+import CreateUserComponent from '@/components/CreateUserComponent.vue';
 
 export default createRouter({
   history: createWebHistory(),
   routes: [
     {
-      path: "/login",
+      path: "/",
       name: "Login",
       component: LoginComponent
     },
@@ -68,5 +69,10 @@ export default createRouter({
       path: '/depositsHistory/:userId',
       name: "DepositsHistory",
       component: DepositsHistoryComponent
+    },
+    {
+      path: '/createUser',
+      name: "CreateUser",
+      component: CreateUserComponent
     }]
 })

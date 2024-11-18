@@ -1,30 +1,35 @@
 import { Body, Controller, Post, Headers, Delete, Param, UnauthorizedException, Put, Get } from '@nestjs/common';
 import { DepositService } from './deposits.service';
-import { DepositDto } from '../dtos/DepositDTO';
+import { DepositDto } from '../dtos/deposit.dto';
 import { Deposit, DepositHistory } from '@prisma/client';
 import { AuthService } from '../authorization/authorization.service';
+import { Public } from '../authorization/public.decorator';
 
 @Controller('deposits')
 export class DepositsController {
-
-  constructor(private depositsService: DepositService,
-              private authService: AuthService) {}
+  constructor(private depositsService: DepositService, private authService: AuthService) {}
 
   @Post('createDeposit')
   async createDeposit(@Body() data: DepositDto, @Headers('Authorization') authorization: string): Promise<Deposit> {
     const decodedToken = await this.authService.decodeHeader(authorization);
-
     return await this.depositsService.createDeposit(decodedToken.userId, data.accountId, data);
   }
 
   @Delete('deleteDeposit/:depositId/:accountId')
-  async deleteDeposit(@Headers('Authorization') authorization: string, @Param('depositId') depositId: string, @Param('accountId') accountId: string): Promise<void> {
+  async deleteDeposit(
+    @Headers('Authorization') authorization: string,
+    @Param('depositId') depositId: string,
+    @Param('accountId') accountId: string,
+  ): Promise<void> {
     const decodedToken = await this.authService.decodeHeader(authorization);
-    await this.depositsService.deleteDeposit(depositId, accountId, decodedToken.userId)
+    await this.depositsService.deleteDeposit(depositId, accountId, decodedToken.userId);
   }
 
   @Put('updateInterestRate')
-  async updateInterestRate(@Body() data: { id: number, interestPerYear: number}, @Headers('Authorization') authorization: string): Promise<void> {
+  async updateInterestRate(
+    @Body() data: { id: number; interestPerYear: number },
+    @Headers('Authorization') authorization: string,
+  ): Promise<void> {
     const decodedToken = await this.authService.decodeHeader(authorization);
 
     if (!decodedToken.isAdmin) {
@@ -33,11 +38,13 @@ export class DepositsController {
     await this.depositsService.updateInterest(data.id, data.interestPerYear);
   }
 
+  @Public()
   @Get('checkProfit/:id')
   async checkProfit(@Param('id') id: string): Promise<number> {
     return await this.depositsService.checkDeposit(id);
   }
 
+  @Public()
   @Get('checkDepositHistory/:userId')
   async checkDepositHistory(@Param('userId') userId: string): Promise<DepositHistory[]> {
     return await this.depositsService.getDepositHistory(userId);

@@ -12,6 +12,7 @@
       </div>
       <button type="submit">Увійти</button>
     </form>
+    <button type="submit" @click="createUser">Зареєструватися</button>
     <p v-if="errorMessage">{{ errorMessage }}</p>
   </div>
 </template>
@@ -52,7 +53,10 @@ export default {
         this.errorMessage = 'Невірний email або пароль';
       }
     },
-  },
+    async createUser() {
+      this.$router.push('/createUser');
+    }
+  }
 };
 </script>
 

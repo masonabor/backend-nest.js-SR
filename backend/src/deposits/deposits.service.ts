@@ -1,25 +1,25 @@
 import { Injectable, ForbiddenException, NotFoundException, HttpStatus, HttpException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { DepositDto } from '../dtos/DepositDTO';
+import { DepositDto } from '../dtos/deposit.dto';
 import { Deposit, DepositHistory } from '@prisma/client';
 import { AccountsService } from '../accounts/accounts.service';
 import { UsersService } from '../users/users.service';
 
 @Injectable()
 export class DepositService {
-
-  constructor(private prisma: PrismaService,
-              private accountsService: AccountsService,
-              private usersService: UsersService,) {}
+  constructor(
+    private prisma: PrismaService,
+    private accountsService: AccountsService,
+    private usersService: UsersService,
+  ) {}
 
   async createDeposit(userId: string, accountId: string, createDepositDto: DepositDto) {
-
     const interestPerYear = 20;
     const accountIdToNumber = parseInt(accountId, 10);
     const userIdToNumber = parseInt(userId, 10);
 
-    let account = await this.accountsService.getAccountById(accountIdToNumber)
-    const user = await this.usersService.getUserById(userId);
+    const account = await this.accountsService.getAccountById(accountIdToNumber);
+    const user = await this.usersService.getUserById(userIdToNumber);
 
     if (user.banned) {
       throw new HttpException('You are banned', HttpStatus.BAD_REQUEST);
@@ -35,52 +35,44 @@ export class DepositService {
 
     if (account.balance >= createDepositDto.balance) {
       const newBalance = account.balance - createDepositDto.balance;
-      account = await this.accountsService.updateBalance(account.id, newBalance);
+      await this.accountsService.updateBalance(account.id, newBalance);
 
       const interval = parseInt(createDepositDto.interval, 10);
       const expiryDate = new Date();
       expiryDate.setFullYear(expiryDate.getFullYear() + interval);
-      const depositNumber = Math.floor(10000000 + Math.random() * 90000000)
+      const depositNumber = Math.floor(10000000 + Math.random() * 90000000);
 
       await this.prisma.depositHistory.create({
         data: {
           depositNumber,
           balance: createDepositDto.balance,
           currency: account.currency,
-          interestPerYear: interestPerYear,
+          interestPerYear,
           userId: userIdToNumber,
           expiryDate: expiryDate.toISOString(),
-          interval
+          interval,
         },
-      })
+      });
 
       return this.prisma.deposit.create({
         data: {
           depositNumber,
           balance: createDepositDto.balance,
           currency: account.currency,
-          interestPerYear: interestPerYear,
+          interestPerYear,
           accountId: account.id,
           expiryDate: expiryDate.toISOString(),
-          interval
-        }
+          interval,
+        },
       });
     } else {
       throw new HttpException('Not enough balance to create deposit', HttpStatus.BAD_REQUEST);
     }
   }
 
-  async getDepositByAccountNumber(depositNumber: number): Promise<Deposit> {
-    const deposit = this.prisma.deposit.findUnique({
-      where: { depositNumber }
-    });
-
-    return deposit ? deposit : null;
-  }
-
   async getDepositById(id: number): Promise<Deposit> {
     return this.prisma.deposit.findUnique({
-      where: { id }
+      where: { id },
     });
   }
 
@@ -97,13 +89,11 @@ export class DepositService {
       throw new NotFoundException(`Deposit with ID ${depositId} not found`);
     }
 
-
     const newBalance = account.balance + deposit.balance;
-
     await this.accountsService.updateBalance(parseInt(accountId, 10), newBalance);
 
     await this.prisma.deposit.delete({
-      where: { id: parseInt(depositId, 10) }
+      where: { id: parseInt(depositId, 10) },
     });
   }
 
@@ -113,29 +103,23 @@ export class DepositService {
         return ((amount / 100) * interestPerYear) + amount;
       }
 
-      return calculateBalance((interval - 1), interestPerYear,  ((amount / 100) * interestPerYear) + amount);
+      return calculateBalance(interval - 1, interestPerYear, ((amount / 100) * interestPerYear) + amount);
     }
-    const idToNumber = parseInt(id, 10)
-    const deposit = await this.getDepositById(idToNumber);
-
+    const deposit = await this.getDepositById(parseInt(id, 10));
     return calculateBalance(deposit.interval, deposit.interestPerYear, deposit.balance);
   }
 
   async updateInterest(id: number, interestPerYear: number): Promise<void> {
     await this.prisma.deposit.update({
       where: { id },
-      data: {
-        interestPerYear
-      }
-    })
+      data: { interestPerYear },
+    });
   }
 
   async getDepositHistory(userId: string): Promise<DepositHistory[]> {
     return this.prisma.depositHistory.findMany({
       where: { userId: parseInt(userId, 10) },
-      orderBy: {
-        dateOfCreation: 'desc'
-      }
-    })
+      orderBy: { dateOfCreation: 'desc' },
+    });
   }
 }

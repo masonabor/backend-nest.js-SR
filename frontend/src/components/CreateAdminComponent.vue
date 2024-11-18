@@ -98,7 +98,11 @@ export default {
       }
 
       try {
-        await axios.post('/api/users/createAdmin', adminData)
+        await axios.post('/api/users/createAdmin', adminData, {
+          headers: {
+            Authorization: `Bearer ${this.token}`
+          }
+        })
         alert('Адміністратор успішно зареєстрований')
         this.clearForm()
       } catch (error) {

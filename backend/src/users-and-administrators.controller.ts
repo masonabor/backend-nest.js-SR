@@ -2,36 +2,38 @@ import {
   Body,
   Controller,
   Get,
-  HttpException,
-  HttpStatus,
   Param,
   Post,
   Headers,
   UnauthorizedException,
+  UseGuards,
 } from '@nestjs/common';
 import { UsersService } from './users/users.service';
 import { Administrator, User } from '@prisma/client';
 import { AdministratorsService } from './administrators/administrators.service';
 import { AuthService } from './authorization/authorization.service';
-import { UserDto } from './dtos/UserDTO';
-import { AdministratorDto } from './dtos/AdministratorDTO';
+import { CreateUserDto, BanUserDto } from './dtos/user.dto';
+import { AdminGuard } from './authorization/admin.guard';
+import { Public } from './authorization/public.decorator';
+import { CreateAdminDto } from './dtos/administrator.dto';
 
 @Controller('users')
 export class UsersAndAdministratorsController {
-
-  constructor(private usersService: UsersService,
-              private administratorsService: AdministratorsService,
-              private authService: AuthService
+  constructor(
+    private usersService: UsersService,
+    private administratorsService: AdministratorsService,
+    private authService: AuthService,
   ) {}
 
-
+  @Public()
   @Post('createUser')
-  async createUser(@Body() data: UserDto) {
-    return await this.usersService.createUser(data.user);
+  async createUser(@Body() data: CreateUserDto) {
+    return await this.usersService.createUser(data);
   }
 
   @Post('createAdmin')
-  async createAdmin(@Body() data: AdministratorDto) {
+  @UseGuards(AdminGuard)
+  async createAdmin(@Body() data: CreateAdminDto) {
     return await this.administratorsService.createAdmin(data);
   }
 
@@ -51,7 +53,9 @@ export class UsersAndAdministratorsController {
   @Post('getAll')
   async getAllFromUser(@Headers('Authorization') authorization: string): Promise<User> {
     if (!authorization || !authorization.startsWith('Bearer ')) {
-      throw new UnauthorizedException('Authorization header must be provided in the format: Bearer <token>');
+      throw new UnauthorizedException(
+        'Authorization header must be provided in the format: Bearer <token>',
+      );
     }
 
     const token = authorization.replace('Bearer ', '');
@@ -62,41 +66,22 @@ export class UsersAndAdministratorsController {
       throw new UnauthorizedException('Invalid or expired token');
     }
   }
+
   @Get('getUserInfo/:id')
-  async getUserInfo(@Headers('Authorization') authorization: string, @Param('id') id: string): Promise<User> {
-    console.log(authorization, id);
-    const admin = await this.authService.decodeHeader(authorization);
-
-    if (!admin.isAdmin) {
-      throw new UnauthorizedException('You are not authorized to access this page');
-    }
-
-    const user = await this.usersService.getUserWithAccountsAndDeposits(id);
-    if (user) {
-      return user;
-    }
-
-    throw new HttpException('User is not found', HttpStatus.NOT_FOUND);
+  @UseGuards(AdminGuard)
+  async getUserInfo(@Param('id') id: string): Promise<User> {
+    return await this.usersService.getUserWithAccountsAndDeposits(id);
   }
 
   @Get('getAllUsers')
-  async getAllUsers(@Headers('Authorization') authorization: string): Promise<User[]> {
-    const admin = await this.authService.decodeHeader(authorization);
-    if (!admin.isAdmin) {
-      throw new UnauthorizedException('You are not authorized to access this resource');
-    }
+  @UseGuards(AdminGuard)
+  async getAllUsers(): Promise<User[]> {
     return await this.usersService.getAllUsers();
   }
 
-
   @Post('banUser')
-  async banUser(@Headers('Authorization') authorization: string, @Body() data: UserDto): Promise<void> {
-    const admin = await this.authService.decodeHeader(authorization);
-
-    if (!admin.isAdmin) {
-      throw new UnauthorizedException('You are not an admin');
-    }
-
-    await this.usersService.banUser(data.user.id, data.user.banReason);
+  @UseGuards(AdminGuard)
+  async banUser(@Body() data: BanUserDto): Promise<void> {
+    await this.usersService.banUser(data.id, data.banReason);
   }
 }

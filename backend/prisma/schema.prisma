@@ -49,7 +49,7 @@ model Deposit {
   interestPerYear Float
   expiryDate DateTime
   interval Int
-  account Account @relation(fields: [accountId], references: [id])
+  account Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
   accountId Int
   dateOfCreation DateTime @default(now())
   @@map("deposits")
@@ -71,8 +71,8 @@ model DepositHistory {
 
 model Transaction {
   id Int @id @default(autoincrement())
-  fromAccount Account @relation("FromAccountRelation", fields: [fromAccountNumber], references: [accountNumber])
-  toAccount Account @relation("ToAccountRelation", fields: [toAccountNumber], references : [accountNumber])
+  fromAccount Account @relation("FromAccountRelation", fields: [fromAccountNumber], references: [accountNumber], onDelete: Cascade)
+  toAccount Account @relation("ToAccountRelation", fields: [toAccountNumber], references : [accountNumber], onDelete: Cascade)
   fromAccountNumber Int
   toAccountNumber Int
   amountFromCurrency Float
